@@ -21,8 +21,9 @@ export function addMonths(date: string, months: number): string {
   return target.toISOString().slice(0, 10);
 }
 
+// Use Sylhet's date even when a visitor is in a different time zone.
 export function localDate(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 }
 
 export function localToday() {
@@ -57,7 +58,7 @@ export function dateEligible(profile: Pick<DonorProfile, 'lastDonationDate'>, to
   return !next || next <= today;
 }
 
-export function profileCanBeAvailable(profile: DonorProfile, today = localToday()) {
+export function profileCanBeAvailable(profile: Pick<DonorProfile, 'dateOfBirth' | 'weight' | 'diseases' | 'lastDonationDate'>, today = localToday()) {
   return dateEligible(profile, today) && ageOn(profile.dateOfBirth, today) >= 18 && profile.weight >= 50 && !profile.diseases;
 }
 
@@ -92,30 +93,11 @@ export function shareMessage(request: BloodRequest) {
   return `URGENT: Need ${request.bloodGroup} blood (${request.units} ${request.units === 1 ? 'bag' : 'bags'}) at ${request.hospital}, Sylhet. Contact: ${request.phone}. Please share!`;
 }
 
-export function requestShareUrl(request: BloodRequest, origin: string) {
-  const shareable = { ...request, sample: false };
+// Share only an opaque database ID, never the patient's details in the URL.
+export function requestShareUrl(request: Pick<BloodRequest, 'id'>, origin: string) {
   const url = new URL('/live-requests', origin);
-  url.searchParams.set('request', JSON.stringify(shareable));
+  url.searchParams.set('request', request.id);
   return url.toString();
-}
-
-// A share link is untrusted input. Validate it before showing contact actions.
-export function parseSharedRequest(raw: string | null): BloodRequest | null {
-  if (!raw || raw.length > 4000) return null;
-  try {
-    const value = JSON.parse(raw) as Partial<BloodRequest>;
-    if (typeof value.id !== 'string' || !/^BH-R-[A-Z0-9]{4,12}$/.test(value.id)) return null;
-    if (!BLOOD_GROUPS.includes(value.bloodGroup as BloodGroup)) return null;
-    if (typeof value.patient !== 'string' || !value.patient.trim() || value.patient.length > 80) return null;
-    if (typeof value.hospital !== 'string' || !value.hospital.trim() || value.hospital.length > 120) return null;
-    if (typeof value.area !== 'string' || !value.area.trim() || value.area.length > 80) return null;
-    if (typeof value.phone !== 'string' || !validPhone(value.phone)) return null;
-    if (!Number.isInteger(value.units) || !value.units || value.units < 1 || value.units > 4) return null;
-    if (!Number.isInteger(value.unitsReceived) || (value.unitsReceived as number) < 0 || (value.unitsReceived as number) > value.units) return null;
-    if (typeof value.createdAt !== 'number' || typeof value.expiresAt !== 'number' || !Number.isFinite(value.createdAt) || !Number.isFinite(value.expiresAt) || value.expiresAt <= value.createdAt || value.expiresAt - value.createdAt > 24 * 60 * 60 * 1000) return null;
-    if (typeof value.neededBy !== 'string' || value.neededBy.length > 30 || typeof value.note !== 'string' || value.note.length > 500) return null;
-    return { ...value, sample: false } as BloodRequest;
-  } catch { return null; }
 }
 
 export function countdown(expiresAt: number, now: number) {

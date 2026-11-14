@@ -12,6 +12,7 @@
   "dependencies": {
     "@fontsource/hind-siliguri": "^5.2.6",
     "@fontsource/inter": "^5.2.8",
+    "@supabase/supabase-js": "^2.119.0",
     "lucide-react": "^0.468.0",
     "next": "15.5.29",
     "qrcode.react": "^4.2.0",

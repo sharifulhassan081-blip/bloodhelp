@@ -1,47 +1,26 @@
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] as const;
 export type BloodGroup = (typeof BLOOD_GROUPS)[number];
 export type Gender = 'Male' | 'Female' | 'Other';
-export type DonorStatus = 'available' | 'this-week' | 'unavailable';
 
+// The public directory deliberately excludes date of birth, health and history.
 export interface Donor {
   id: string;
   name: string;
   bloodGroup: BloodGroup;
   area: string;
   gender: Gender;
-  distance: number;
-  lastDonationMonths: number | null;
-  donations: number;
-  status: DonorStatus;
   phone: string;
-  sample: boolean;
-  verified: boolean;
+  emergency: boolean;
 }
-
-export interface Donation {
-  id: string;
-  date: string;
-  location: string;
-}
-
-export interface DonorProfile {
-  id: string;
-  name: string;
-  phone: string;
-  bloodGroup: BloodGroup;
+export interface Donation { id: string; date: string; location: string; }
+export interface DonorProfile extends Donor {
   dateOfBirth: string;
-  gender: Gender;
-  area: string;
   lastDonationDate: string;
   weight: number;
   diseases: boolean;
-  emergency: boolean;
   available: boolean;
-  verified: boolean;
   history: Donation[];
-  photo?: string;
 }
-
 export interface BloodRequest {
   id: string;
   patient: string;
@@ -55,5 +34,6 @@ export interface BloodRequest {
   note: string;
   createdAt: number;
   expiresAt: number;
-  sample: boolean;
 }
+export type NewBloodRequest = Omit<BloodRequest, 'id' | 'createdAt' | 'expiresAt' | 'unitsReceived'>;
+export type NewDonorProfile = Omit<DonorProfile, 'id' | 'history'>;

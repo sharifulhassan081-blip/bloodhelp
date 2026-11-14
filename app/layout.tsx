@@ -14,7 +14,7 @@ import { SiteFooter, SiteHeader } from '@/components/site-shell';
 
 export const metadata: Metadata = {
   title: { default: 'Bloodhelp — Sylhet Blood Donor Finder', template: '%s | Bloodhelp Sylhet' },
-  description: 'A community-minded blood donor finder for Sylhet, Bangladesh. Explore the interactive demonstration.',
+  description: 'A community-minded blood donor finder for Sylhet, Bangladesh. Connect with consenting donors and blood requests.',
   manifest: '/manifest.webmanifest',
   icons: { icon: '/icon.svg', apple: '/icon-192.png' },
   appleWebApp: { capable: true, title: 'Bloodhelp', statusBarStyle: 'default' },
