@@ -84,3 +84,17 @@ test('compatibility, camp RSVP and mobile menu', async ({ page }) => {
   await page.getByRole('button', { name: 'Open menu' }).click();
   await expect(page.getByRole('navigation', { name: 'Mobile navigation' }).getByRole('link', { name: 'Dashboard' })).toBeVisible();
 });
+
+test('all pages fit narrow mobile screens in English and Bangla', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  const routes = ['/', '/find-donors', '/live-requests', '/request-blood', '/register', '/dashboard', '/resources'];
+  for (const language of ['en', 'bn']) {
+    await page.goto('/');
+    if (language === 'bn') await page.getByRole('button', { name: 'বাংলা', exact: true }).click();
+    for (const route of routes) {
+      await page.goto(route);
+      await page.waitForLoadState('networkidle');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `${language}: ${route}`).toBe(320);
+    }
+  }
+});
