@@ -170,18 +170,10 @@ img { max-width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 
-/* Account and live status */
-.account-card { max-width: 540px; margin: 0 auto; padding: 32px; box-shadow: var(--shadow); }
-.account-card h1 { font-size: 30px; letter-spacing: -.04em; margin: 15px 0 20px; }
-.account-card .notice { margin-bottom: 18px; }
-.account-form { display: flex; flex-direction: column; gap: 15px; }
-.account-form > .muted { margin: 0; font-size: 12px; }
-.account-form > .button { align-self: flex-start; }
-.account-mode { display: flex; flex-wrap: wrap; gap: 15px; }
-.account-mode button { color: var(--red); background: none; border: 0; padding: 0; font-size: 11px; font-weight: 700; text-align: left; }
-.account-links { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Live status and device-session guidance */
+.device-notice { margin-top: 12px; }
+.device-notice span { min-width: 0; }
 .live-error { margin-bottom: 15px; }
-@media (max-width: 390px) { .account-card { padding: 22px; } .account-card .button { max-width: 100%; white-space: normal; } }
 .owned-list { margin-top: 18px; }
 .owned-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid var(--line); padding: 16px 0; }
 .owned-item strong { font-size: 12px; }

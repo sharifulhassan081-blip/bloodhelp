@@ -3,9 +3,10 @@
 begin;
 create temp table bh_test_users as select gen_random_uuid() as a, gen_random_uuid() as b;
 grant select on bh_test_users to anon, authenticated;
-insert into auth.users (id, email, email_confirmed_at)
-select a, 'test-' || a::text || '@example.invalid', now() from bh_test_users
-union all select b, 'test-' || b::text || '@example.invalid', now() from bh_test_users;
+-- Anonymous Supabase users still have the authenticated database role.
+insert into auth.users (id, is_anonymous)
+select a, true from bh_test_users
+union all select b, true from bh_test_users;
 
 do $$ begin
   if has_table_privilege('anon','public.donor_profiles','select')
@@ -18,6 +19,7 @@ do $$ begin
 end $$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', (select a::text from bh_test_users), true);
+select set_config('request.jwt.claims', (select json_build_object('sub', a, 'role', 'authenticated', 'is_anonymous', true)::text from bh_test_users), true);
 insert into public.donor_profiles (name, phone, blood_group, date_of_birth, gender, area, weight, diseases, emergency, available, public_consent)
 select 'Test ' || a::text, '01712345678', 'O+', '1990-01-01', 'Other', 'Zindabazar', 60, false, true, true, true from bh_test_users;
 insert into public.blood_requests (patient, hospital, blood_group, units, needed_by, phone, area, note, public_consent)
@@ -30,6 +32,7 @@ do $$ begin
 end $$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', (select b::text from bh_test_users), true);
+select set_config('request.jwt.claims', (select json_build_object('sub', b, 'role', 'authenticated', 'is_anonymous', true)::text from bh_test_users), true);
 do $$ declare changed integer; begin
   if exists (select 1 from public.donor_profiles) or exists (select 1 from public.blood_requests) then raise exception 'Another user read private data'; end if;
   update public.blood_requests set units_received = 1; get diagnostics changed = row_count;
@@ -39,12 +42,14 @@ insert into public.donor_reports (donor_id, reason)
 select id, 'Test concern about a number' from public.public_donors where name = (select 'Test ' || a::text from bh_test_users);
 do $$ begin if (select count(*) from public.donor_reports) <> 1 then raise exception 'Reporter cannot see their report'; end if; end $$;
 select set_config('request.jwt.claim.sub', (select a::text from bh_test_users), true);
+select set_config('request.jwt.claims', (select json_build_object('sub', a, 'role', 'authenticated', 'is_anonymous', true)::text from bh_test_users), true);
 do $$ begin if exists (select 1 from public.donor_reports) then raise exception 'Another user can see the report'; end if; end $$;
 update public.blood_requests set units_received = 2;
 set local role anon;
 do $$ begin if exists (select 1 from public.public_requests where patient = (select 'Test ' || a::text from bh_test_users)) then raise exception 'Fulfilled request visible'; end if; end $$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', (select a::text from bh_test_users), true);
+select set_config('request.jwt.claims', (select json_build_object('sub', a, 'role', 'authenticated', 'is_anonymous', true)::text from bh_test_users), true);
 update public.blood_requests set units_received = 1;
 insert into public.donations (donated_on, location) values (timezone('Asia/Dhaka', now())::date, 'Test hospital');
 do $$ begin if (select available from public.donor_profiles) then raise exception 'Donation did not switch availability off'; end if; end $$;
@@ -56,6 +61,7 @@ set local role anon;
 do $$ begin if exists (select 1 from public.public_requests where patient = (select 'Test ' || a::text from bh_test_users)) then raise exception 'Expired request visible'; end if; end $$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', (select a::text from bh_test_users), true);
+select set_config('request.jwt.claims', (select json_build_object('sub', a, 'role', 'authenticated', 'is_anonymous', true)::text from bh_test_users), true);
 select public.delete_my_account();
 reset role;
 do $$ begin

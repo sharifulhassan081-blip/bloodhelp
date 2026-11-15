@@ -1,3 +1,6 @@
-import { Suspense } from 'react';
-import { Account } from '@/components/auth';
-export default function Page() { return <Suspense fallback={<div className="page-loading">Loading account…</div>}><Account /></Suspense>; }
+import { redirect } from 'next/navigation';
+
+// Preserve old account links without showing a sign-in or registration page.
+export default function Page() {
+  redirect('/dashboard');
+}

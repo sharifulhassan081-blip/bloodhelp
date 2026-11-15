@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useState } from 'react';
-import Link from 'next/link';
 import { Flag, MapPin, MessageCircle, Phone, UserRound } from 'lucide-react';
 import { useApp } from './app-provider';
 import { BloodBadge, Modal } from './ui';
@@ -8,7 +7,7 @@ import { whatsappPhone } from '@/lib/utils';
 import type { Donor } from '@/lib/types';
 
 export function DonorCard({ donor }: { donor: Donor }) {
-  const { tx, user, reportDonor } = useApp(); const [open, setOpen] = useState(false);
+  const { tx, reportDonor } = useApp(); const [open, setOpen] = useState(false);
   const [reporting, setReporting] = useState(false); const [reason, setReason] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const [error, setError] = useState('');
   const close = useCallback(() => { setOpen(false); setReporting(false); setMessage(''); setError(''); }, []);
   const submitReport = async (event: React.FormEvent) => {
@@ -25,7 +24,7 @@ export function DonorCard({ donor }: { donor: Donor }) {
     <Modal open={open} onClose={close} title={tx('Donor profile', 'দাতার প্রোফাইল')}><div className="profile-modal-top"><span className="avatar avatar-large">{initials}</span><div><h3>{donor.name}</h3><div className="status"><span />{tx('Available · self-reported', 'উপলব্ধ · নিজে জানিয়েছেন')}</div></div><BloodBadge group={donor.bloodGroup} /></div><div className="profile-facts"><p><MapPin size={17} /> {donor.area}, Sylhet</p><p><Phone size={17} /> {donor.phone}</p></div><div className="notice notice-neutral">{tx('Details and availability are provided by the donor and are not independently verified. A blood bank must assess eligibility.', 'দাতার দেওয়া তথ্য ও উপলব্ধতা স্বাধীনভাবে যাচাই করা হয়নি। রক্তদানের যোগ্যতা ব্লাড ব্যাংক নির্ধারণ করবে।')}</div>
       {message && <p className="notice notice-green spaced-notice" role="status">{message}</p>}
       {!message && !reporting && <button className="report-button" onClick={() => setReporting(true)}><Flag size={15} /> {tx('Report a concern', 'সমস্যা রিপোর্ট করুন')}</button>}
-      {reporting && (user ? <form onSubmit={submitReport}><label className="form-field modal-field">{tx('What is the concern?', 'সমস্যাটি কী?')}<textarea required minLength={10} maxLength={500} rows={3} value={reason} onChange={e => setReason(e.target.value)} /></label><p className="muted">{tx('Do not include medical details. Reports are stored for the site operator; no automatic staff alert or guaranteed response is provided.', 'চিকিৎসাসংক্রান্ত তথ্য দেবেন না। রিপোর্ট সাইট পরিচালকের জন্য সংরক্ষিত হয়; স্বয়ংক্রিয় সতর্কতা বা উত্তরের নিশ্চয়তা নেই।')}</p>{error && <p className="form-error" role="alert">{error}</p>}<button className="button button-subtle" disabled={busy} type="submit">{tx('Submit report', 'রিপোর্ট পাঠান')}</button></form> : <p className="muted">{tx('Sign in to submit a report.', 'রিপোর্ট পাঠাতে সাইন ইন করুন।')} <Link href="/account?next=%2Ffind-donors" className="text-link">{tx('Sign in', 'সাইন ইন')}</Link></p>)}
+      {reporting && <form onSubmit={submitReport}><label className="form-field modal-field">{tx('What is the concern?', 'সমস্যাটি কী?')}<textarea required minLength={10} maxLength={500} rows={3} value={reason} onChange={e => setReason(e.target.value)} /></label><p className="muted">{tx('Do not include medical details. Reports are stored for the site operator; no automatic staff alert or guaranteed response is provided.', 'চিকিৎসাসংক্রান্ত তথ্য দেবেন না। রিপোর্ট সাইট পরিচালকের জন্য সংরক্ষিত হয়; স্বয়ংক্রিয় সতর্কতা বা উত্তরের নিশ্চয়তা নেই।')}</p>{error && <p className="form-error" role="alert">{error}</p>}<button className="button button-subtle" disabled={busy} type="submit">{tx('Submit report', 'রিপোর্ট পাঠান')}</button></form>}
     </Modal>
   </article>;
 }

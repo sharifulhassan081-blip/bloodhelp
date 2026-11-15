@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { ensureDeviceSession, supabase } from '@/lib/supabase';
 import { donorFromRow, donationFromRow, profileFromRow, profileToRow, requestFromRow, requestToRow } from '@/lib/mappers';
 import type { BloodRequest, Donor, DonorProfile, NewBloodRequest, NewDonorProfile } from '@/lib/types';
 
@@ -23,7 +23,7 @@ type AppContextValue = {
   addRequest: (request: NewBloodRequest) => Promise<BloodRequest>;
   updateRequest: (id: string, unitsReceived: number) => Promise<void>;
   deleteRequest: (id: string) => Promise<void>;
-  deleteAccount: () => Promise<void>;
+  deleteDeviceData: () => Promise<void>;
   reportDonor: (id: string, reason: string) => Promise<void>;
   notify: (message: string) => void;
 };
@@ -113,6 +113,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const notify = useCallback((message: string) => { setToast(message); if (toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 3500); }, []);
   const saveProfile = useCallback(async (value: NewDonorProfile, id?: string) => {
+    if (!id) await ensureDeviceSession();
     const query = id ? db().from('donor_profiles').update(profileToRow(value)).eq('id', id) : db().from('donor_profiles').insert(profileToRow(value));
     const { data, error } = await query.select().single();
     if (error) throw error;
@@ -130,6 +131,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     refreshPrivate(); void refresh();
   }, [refresh, refreshPrivate]);
   const addRequest = useCallback(async (value: NewBloodRequest) => {
+    await ensureDeviceSession();
     const { data, error } = await db().from('blood_requests').insert(requestToRow(value)).select().single();
     if (error) throw error;
     const result = requestFromRow(data); refreshPrivate(); void refresh(); return result;
@@ -145,15 +147,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     refreshPrivate(); void refresh();
   }, [refresh, refreshPrivate]);
   const reportDonor = useCallback(async (id: string, reason: string) => {
+    await ensureDeviceSession();
     const { error } = await db().from('donor_reports').insert({ donor_id: id, reason });
     if (error) throw error;
   }, []);
-  const deleteAccount = useCallback(async () => {
+  const deleteDeviceData = useCallback(async () => {
     const { error } = await db().rpc('delete_my_account');
     if (error) throw error;
     await db().auth.signOut({ scope: 'local' }); setUser(null); setProfile(null); setOwnedRequests([]); void refresh();
   }, [refresh]);
-  return <Context.Provider value={{ language, setLanguage, tx, dark, setDark, loaded, user, configured: !!supabase, donors, donorsLoading, donorError, requests, requestsLoading, requestError, ownedRequests, privateLoading: !!user && (privateLoading || privateOwner !== user.id), privateError, profile, refresh, saveProfile, deleteProfile, addDonation, addRequest, updateRequest, deleteRequest, deleteAccount, reportDonor, notify }}>
+  return <Context.Provider value={{ language, setLanguage, tx, dark, setDark, loaded, user, configured: !!supabase, donors, donorsLoading, donorError, requests, requestsLoading, requestError, ownedRequests, privateLoading: !!user && (privateLoading || privateOwner !== user.id), privateError, profile, refresh, saveProfile, deleteProfile, addDonation, addRequest, updateRequest, deleteRequest, deleteDeviceData, reportDonor, notify }}>
     {children}{toast && <div className="toast" role="status">{toast}</div>}
   </Context.Provider>;
 }
